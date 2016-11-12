@@ -7,7 +7,7 @@ from rest_framework import serializers
 from goods.models import Type,TypeAttr,Goods
 
 class TypeSerializer(serializers.ModelSerializer):
-    superiors_name = serializers.SerializerMethodField()
+    superiors_name = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = Type
         fields = ('pk','name','superiors','superiors_name')
@@ -16,6 +16,12 @@ class TypeSerializer(serializers.ModelSerializer):
         if obj.superiors:
             return obj.superiors.name
         return None
+    
+    def validate_superiors(self, value):
+        if value=='' or value is None:
+            raise serializers.ValidationError("暂不支持多行业功能，请期待1.x版本的更新")
+        else:
+            return value
     
 class TypeAttrSerializer(serializers.ModelSerializer):
     goodstype = serializers.IntegerField(write_only=True)
@@ -43,3 +49,21 @@ class GoodsSerializer(serializers.ModelSerializer):
                 'user',
                 'lastmodifyer'
                 )
+        
+class GoodsSearchSerializer(serializers.ModelSerializer):
+    type = serializers.SerializerMethodField()
+    class Meta:
+        model = Goods
+        fields = (
+                  'pk',
+                  'name',
+                  'manufacturer',
+                  'specification',
+                  'unit',
+                  'barcode',
+                  'type',
+                  'salesprice',
+                  'static_attr'
+                 )
+    def get_type(self,obj):
+        return obj.type.name
